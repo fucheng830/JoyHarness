@@ -2,10 +2,14 @@
 
 Provides press/release/tap/combination operations with state tracking
 to prevent double-press and ensure cleanup.
+
+For right-side modifier keys (right ctrl, right shift, right alt),
+uses keybd_event to send the correct VK code.
 """
 
 import time
 import logging
+import ctypes
 
 import keyboard
 
@@ -14,12 +18,38 @@ logger = logging.getLogger(__name__)
 # Currently held keys — prevents double-press and enables release_all cleanup
 _held_keys: set[str] = set()
 
+# Keys that need keybd_event for correct left/right distinction
+_EXTENDED_KEYS: dict[str, int] = {
+    "right ctrl":  0xA3,  # VK_RCONTROL
+    "right shift": 0xA1,  # VK_RSHIFT
+    "right alt":   0xA5,  # VK_RMENU
+}
+
+KEYEVENTF_KEYUP = 0x0002
+
+
+def _is_extended_key(key: str) -> bool:
+    return key.lower() in (k.lower() for k in _EXTENDED_KEYS)
+
+
+def _extended_press(key: str) -> None:
+    vk = _EXTENDED_KEYS[key.lower()]
+    ctypes.windll.user32.keybd_event(vk, 0, 0, 0)
+
+
+def _extended_release(key: str) -> None:
+    vk = _EXTENDED_KEYS[key.lower()]
+    ctypes.windll.user32.keybd_event(vk, 0, KEYEVENTF_KEYUP, 0)
+
 
 def press(key: str) -> None:
     """Hold a key down. No-op if already held."""
     if key in _held_keys:
         return
-    keyboard.press(key)
+    if _is_extended_key(key):
+        _extended_press(key)
+    else:
+        keyboard.press(key)
     _held_keys.add(key)
     logger.debug("pressed: %s", key)
 
@@ -28,7 +58,10 @@ def release(key: str) -> None:
     """Release a held key. No-op if not currently held."""
     if key not in _held_keys:
         return
-    keyboard.release(key)
+    if _is_extended_key(key):
+        _extended_release(key)
+    else:
+        keyboard.release(key)
     _held_keys.discard(key)
     logger.debug("released: %s", key)
 
@@ -44,9 +77,14 @@ def tap(key: str, duration: float = 0.02) -> None:
         keyboard.release(key)
         _held_keys.discard(key)
 
-    keyboard.press(key)
-    time.sleep(duration)
-    keyboard.release(key)
+    if _is_extended_key(key):
+        _extended_press(key)
+        time.sleep(duration)
+        _extended_release(key)
+    else:
+        keyboard.press(key)
+        time.sleep(duration)
+        keyboard.release(key)
 
     if was_held:
         keyboard.press(key)

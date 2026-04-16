@@ -80,6 +80,11 @@ def merge_with_defaults(user_config: dict) -> dict:
     if "switch_scroll_interval" in user_config:
         result["switch_scroll_interval"] = user_config["switch_scroll_interval"]
 
+    # Override mouse settings
+    for key in ("right_stick_mouse", "mouse_sensitivity"):
+        if key in user_config:
+            result[key] = user_config[key]
+
     # Preserve known_apps from user config (not in DEFAULT_CONFIG)
     if "known_apps" in user_config:
         result["known_apps"] = user_config["known_apps"]
@@ -236,6 +241,9 @@ def _validate_mapping_entry(name: str, mapping: dict) -> list[str]:
             errors.append(f"'{name}' action '{action}' requires a 'key' string")
         elif not _is_valid_key(key):
             errors.append(f"'{name}' has invalid key name: '{key}'")
+
+    elif action.startswith("mouse_"):
+        pass  # Mouse actions don't need a 'key' field
 
     elif action in ("combination", "sequence"):
         keys = mapping.get("keys")

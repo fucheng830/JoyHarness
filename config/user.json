@@ -10,20 +10,9 @@
     "buttons": {
       "A": {
         "action": "tap",
-        "key": "enter"
+        "key": "backspace"
       },
       "B": {
-        "action": "sequence",
-        "keys": [
-          "shift",
-          "tab"
-        ]
-      },
-      "X": {
-        "action": "auto",
-        "key": "f2"
-      },
-      "Y": {
         "action": "sequence",
         "keys": [
           "alt",
@@ -31,8 +20,17 @@
         ],
         "repeat": 500
       },
+      "X": {
+        "action": "hold",
+        "key": "ctrl"
+      },
+      "Y": {
+        "action": "tap",
+        "key": "enter"
+      },
       "R": {
-        "action": "window_switch"
+        "action": "hold",
+        "key": "ctrl"
       },
       "ZR": {
         "action": "macro",
@@ -64,6 +62,14 @@
           }
         ]
       },
+      "L": {
+        "action": "tap",
+        "key": "backspace"
+      },
+      "ZL": {
+        "action": "hold",
+        "key": "shift"
+      },
       "Plus": {
         "action": "combination",
         "keys": [
@@ -71,42 +77,57 @@
           "s"
         ]
       },
+      "Minus": {
+        "action": "tap",
+        "key": "escape"
+      },
       "Home": {
         "action": "tap",
         "key": "windows"
+      },
+      "Capture": {
+        "action": "tap",
+        "key": "print_screen"
       },
       "RStick": {
         "action": "tap",
         "key": "tab"
       },
-      "SL": {
+      "LStick": {
+        "action": "tap",
+        "key": "enter"
+      },
+      "SL_L": {
         "action": "hold",
         "key": "alt"
       },
-      "SR": {
+      "SR_L": {
+        "action": "window_switch"
+      },
+      "SL_R": {
+        "action": "hold",
+        "key": "alt"
+      },
+      "SR_R": {
         "action": "window_switch"
       }
     },
     "stick_directions": {
       "up": {
-        "action": "auto",
-        "key": "down",
-        "repeat": 100
+        "action": "tap",
+        "key": "down"
       },
       "down": {
-        "action": "auto",
-        "key": "up",
-        "repeat": 100
+        "action": "tap",
+        "key": "up"
       },
       "left": {
-        "action": "auto",
-        "key": "left",
-        "repeat": 100
+        "action": "tap",
+        "key": "right"
       },
       "right": {
-        "action": "auto",
-        "key": "right",
-        "repeat": 100
+        "action": "tap",
+        "key": "left"
       }
     }
   },
@@ -302,22 +323,11 @@
     "dual": {
       "mappings": {
         "buttons": {
-          "A": {
+          "A_L": {
             "action": "tap",
-            "key": "enter"
+            "key": "backspace"
           },
-          "B": {
-            "action": "sequence",
-            "keys": [
-              "shift",
-              "tab"
-            ]
-          },
-          "X": {
-            "action": "auto",
-            "key": "f2"
-          },
-          "Y": {
+          "B_L": {
             "action": "sequence",
             "keys": [
               "alt",
@@ -325,69 +335,69 @@
             ],
             "repeat": 500
           },
+          "X_L": {
+            "action": "hold",
+            "key": "ctrl"
+          },
+          "Y_L": {
+            "action": "tap",
+            "key": "enter"
+          },
+          "A_R": {
+            "action": "tap",
+            "key": "backspace"
+          },
+          "B_R": {
+            "action": "tap",
+            "key": "enter"
+          },
+          "X_R": {
+            "action": "tap",
+            "key": "right"
+          },
+          "Y_R": {
+            "action": "hold",
+            "key": "right ctrl"
+          },
           "R": {
-            "action": "window_switch"
+            "action": "combination",
+            "keys": [
+              "ctrl",
+              "v"
+            ]
           },
           "ZR": {
-            "action": "macro",
-            "if_window": "code.exe",
-            "steps": [
-              {
-                "type": "combination",
-                "keys": [
-                  "ctrl",
-                  "shift",
-                  "p"
-                ]
-              },
-              {
-                "type": "delay",
-                "ms": 100
-              },
-              {
-                "type": "type",
-                "text": "Claude Code: Focus input"
-              },
-              {
-                "type": "delay",
-                "ms": 100
-              },
-              {
-                "type": "tap",
-                "key": "enter"
-              }
+            "action": "combination",
+            "keys": [
+              "ctrl",
+              "c"
             ]
           },
           "L": {
-            "action": "hold",
-            "key": "ctrl"
+            "action": "tap",
+            "key": "backspace"
           },
           "ZL": {
             "action": "hold",
             "key": "shift"
           },
           "Plus": {
-            "action": "combination",
-            "keys": [
-              "ctrl",
-              "s"
-            ]
+            "action": "tap",
+            "key": "left"
           },
           "Minus": {
             "action": "tap",
             "key": "escape"
           },
           "Home": {
-            "action": "tap",
-            "key": "windows"
+            "action": "mouse_right_click"
           },
           "Capture": {
             "action": "tap",
             "key": "print_screen"
           },
           "RStick": {
-            "action": "tap",
-            "key": "tab"
+            "action": "mouse_left_click"
           },
           "LStick": {
             "action": "tap",
@@ -411,23 +421,25 @@
         "stick_directions": {
           "up": {
             "action": "tap",
-            "key": "up"
+            "key": "down"
           },
           "down": {
             "action": "tap",
-            "key": "down"
+            "key": "up"
           },
           "left": {
             "action": "tap",
-            "key": "left"
+            "key": "right"
           },
           "right": {
             "action": "tap",
-            "key": "right"
+            "key": "left"
           }
         }
       }
     }
   },
-  "active_profile": "single_right"
+  "active_profile": "dual",
+  "right_stick_mouse": true,
+  "mouse_sensitivity": 15
 }

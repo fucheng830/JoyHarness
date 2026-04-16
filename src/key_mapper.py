@@ -14,7 +14,8 @@ import time
 import logging
 
 from . import keyboard_output
-from .constants import get_button_indices, get_button_names
+from .constants import get_button_indices, get_button_names, DUAL_RIGHT_OFFSET
+from .constants import BUTTON_INDICES_LEFT, BUTTON_INDICES, LEFT_TO_DUAL_NAMES, RIGHT_TO_DUAL_NAMES
 from .switcher_overlay import SwitcherOverlay
 from .window_switcher import WindowCycler, get_foreground_process_name, get_foreground_hwnd, find_windows
 
@@ -38,9 +39,13 @@ class KeyMapper:
 
         # Build button index → mapping dict
         self._button_mappings: dict[int, dict] = {}
-        for btn_name, mapping in mappings.get("buttons", {}).items():
-            if btn_name in self._button_indices:
-                self._button_mappings[self._button_indices[btn_name]] = mapping
+
+        if mode == "dual":
+            self._build_dual_mappings(mappings)
+        else:
+            for btn_name, mapping in mappings.get("buttons", {}).items():
+                if btn_name in self._button_indices:
+                    self._button_mappings[self._button_indices[btn_name]] = mapping
 
         # Build direction → mapping dict
         self._direction_mappings: dict[str, dict] = {}
@@ -168,6 +173,12 @@ class KeyMapper:
         elif action == "macro":
             self._execute_macro(mapping, btn_name)
 
+        elif action.startswith("mouse_") and action.endswith("_click"):
+            from . import mouse_output
+            button = action.replace("mouse_", "").replace("_click", "")
+            mouse_output.click(button)
+            logger.debug("mouse click [%s] → %s", btn_name, button)
+
     def button_up(self, button_index: int) -> None:
         """Handle a button release event."""
         btn_name = _button_label(button_index, self._mode)
@@ -280,6 +291,26 @@ class KeyMapper:
                 self._switcher_overlay.move_next()
                 self._ws_last_move = now
 
+    def _build_dual_mappings(self, mappings: dict) -> None:
+        """Build button mappings for dual mode with two separate devices.
+
+        Left device buttons keep their physical indices.
+        Right device buttons are offset by DUAL_RIGHT_OFFSET.
+        """
+        buttons = mappings.get("buttons", {})
+
+        # Left device: use BUTTON_INDICES_LEFT + name translation
+        for btn_name, btn_idx in BUTTON_INDICES_LEFT.items():
+            dual_name = LEFT_TO_DUAL_NAMES.get(btn_name, btn_name)
+            if dual_name in buttons:
+                self._button_mappings[btn_idx] = buttons[dual_name]
+
+        # Right device: use BUTTON_INDICES (right) + offset + name translation
+        for btn_name, btn_idx in BUTTON_INDICES.items():
+            dual_name = RIGHT_TO_DUAL_NAMES.get(btn_name, btn_name)
+            if dual_name in buttons:
+                self._button_mappings[btn_idx + DUAL_RIGHT_OFFSET] = buttons[dual_name]
+
     def _release_stick_auto(self) -> None:
         """Release current stick hold key and cancel repeat."""
         stick_keys = [k for k in self._active_holds if isinstance(k, tuple) and k[0] == "stick"]
@@ -342,9 +373,12 @@ class KeyMapper:
         mappings = config.get("mappings", {})
 
         self._button_mappings.clear()
-        for btn_name, mapping in mappings.get("buttons", {}).items():
-            if btn_name in self._button_indices:
-                self._button_mappings[self._button_indices[btn_name]] = mapping
+        if mode == "dual":
+            self._build_dual_mappings(mappings)
+        else:
+            for btn_name, mapping in mappings.get("buttons", {}).items():
+                if btn_name in self._button_indices:
+                    self._button_mappings[self._button_indices[btn_name]] = mapping
 
         self._direction_mappings.clear()
         for direction, mapping in mappings.get("stick_directions", {}).items():
@@ -431,4 +465,11 @@ class KeyMapper:
 
 def _button_label(button_index: int, mode: str = "single_right") -> str:
     """Get human-readable name for a button index."""
+    if mode == "dual" and button_index >= DUAL_RIGHT_OFFSET:
+        real_idx = button_index - DUAL_RIGHT_OFFSET
+        name = BUTTON_INDICES.get(real_idx)
+        return f"{name}(R)" if name else f"BTN_{real_idx}(R)"
+    if mode == "dual":
+        name = BUTTON_INDICES_LEFT.get(button_index)
+        return f"{name}(L)" if name else f"BTN_{button_index}(L)"
     return get_button_names(mode).get(button_index, f"BTN_{button_index}")
