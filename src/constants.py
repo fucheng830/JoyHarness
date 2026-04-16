@@ -28,40 +28,31 @@ BTN_R = 16      # R 肩键
 BTN_SR = 10     # SR (侧边右)
 BTN_ZR = 18     # ZR 扳机
 
-# === Left Joy-Con Button Indices (PLACEHOLDER — run --discover to calibrate) ===
-BTN_L_Y = 0       # Y
-BTN_L_B = 1       # B
-BTN_L_X = 2       # X
-BTN_L_A = 3       # A
-BTN_L_MINUS = 4   # - 按钮
+# === Left Joy-Con Button Indices (calibrated 2026-04-16) ===
+BTN_L_X = 0       # X
+BTN_L_A = 1       # A
+BTN_L_Y = 2       # Y
+BTN_L_B = 3       # B
 BTN_L_CAPTURE = 5 # Capture 按钮
-BTN_L_LSTICK = 6  # 左摇杆按下
+BTN_L_MINUS = 6   # - 按钮
+BTN_L_LSTICK = 7  # 左摇杆按下 (待确认)
 BTN_L_SL = 9      # SL
 BTN_L_SR = 10     # SR
-BTN_L_L = 16      # L 肩键
-BTN_L_ZL = 18     # ZL 扳机
+BTN_L_L = 17      # L 肩键
+BTN_L_ZL = 19     # ZL 扳机
 
-# === Dual Mode Button Indices (PLACEHOLDER — run --discover to calibrate) ===
-# In dual mode (L+R as combined SDL2 device), all buttons from both sides are available
-# with potentially different indices. These are placeholder values.
-BTN_DUAL_X = 0
-BTN_DUAL_A = 1
-BTN_DUAL_Y = 2
-BTN_DUAL_B = 3
-BTN_DUAL_MINUS = 4
-BTN_DUAL_CAPTURE = 5
-BTN_DUAL_HOME = 6
-BTN_DUAL_PLUS = 7
-BTN_DUAL_LSTICK = 8
-BTN_DUAL_RSTICK = 9
-BTN_DUAL_SL_L = 10
-BTN_DUAL_SR_L = 11
-BTN_DUAL_SL_R = 12
-BTN_DUAL_SR_R = 13
-BTN_DUAL_L = 16
-BTN_DUAL_ZL = 17
-BTN_DUAL_R = 18
-BTN_DUAL_ZR = 19
+# === Dual Mode: Separate Device Support ===
+# With SDL_JOYSTICK_HIDAPI_COMBINE_JOY_CONS=0, L and R Joy-Cons are separate devices.
+# Each device uses its own button indices (same as single_left/single_right).
+# Right device buttons are offset by DUAL_RIGHT_OFFSET to avoid index conflicts.
+
+DUAL_RIGHT_OFFSET = 100  # Offset for right device button indices
+
+# Dual mode uses single_left and single_right button indices directly.
+# No separate BTN_DUAL_* constants needed — mapping is done via name lookup.
+# Left device: BUTTON_INDICES_LEFT → dual button names
+# Right device: BUTTON_INDICES (right) → dual button names
+# Right device buttons are stored with +DUAL_RIGHT_OFFSET in key_mapper.
 
 # === Axis Indices (calibrated) ===
 AXIS_RSTICK_Y = 0   # 垂直 (上=负, 下=正)
@@ -107,28 +98,28 @@ BUTTON_NAMES_LEFT: dict[int, str] = {
 }
 BUTTON_INDICES_LEFT: dict[str, int] = {v: k for k, v in BUTTON_NAMES_LEFT.items()}
 
-# === Dual Mode Button Name Lookup ===
-BUTTON_NAMES_DUAL: dict[int, str] = {
-    BTN_DUAL_A: "A",
-    BTN_DUAL_B: "B",
-    BTN_DUAL_X: "X",
-    BTN_DUAL_Y: "Y",
-    BTN_DUAL_R: "R",
-    BTN_DUAL_ZR: "ZR",
-    BTN_DUAL_L: "L",
-    BTN_DUAL_ZL: "ZL",
-    BTN_DUAL_PLUS: "Plus",
-    BTN_DUAL_MINUS: "Minus",
-    BTN_DUAL_HOME: "Home",
-    BTN_DUAL_CAPTURE: "Capture",
-    BTN_DUAL_RSTICK: "RStick",
-    BTN_DUAL_LSTICK: "LStick",
-    BTN_DUAL_SL_L: "SL_L",
-    BTN_DUAL_SR_L: "SR_L",
-    BTN_DUAL_SL_R: "SL_R",
-    BTN_DUAL_SR_R: "SR_R",
+# === Dual Mode Button Name Lookup (for config validation / GUI only) ===
+# In dual mode with separate devices, button mapping is built from
+# LEFT_TO_DUAL_NAMES / RIGHT_TO_DUAL_NAMES in key_mapper.
+DUAL_BUTTON_NAMES: tuple[str, ...] = (
+    "A_L", "B_L", "X_L", "Y_L", "A_R", "B_R", "X_R", "Y_R",
+    "R", "ZR", "L", "ZL", "Plus", "Minus",
+    "Home", "Capture", "RStick", "LStick", "SL_L", "SR_L", "SL_R", "SR_R",
+)
+BUTTON_NAMES_DUAL: dict[int, str] = {i: name for i, name in enumerate(DUAL_BUTTON_NAMES)}
+BUTTON_INDICES_DUAL: dict[str, int] = {name: i for i, name in enumerate(DUAL_BUTTON_NAMES)}
+
+# Name translation: device button name → dual profile button name
+LEFT_TO_DUAL_NAMES: dict[str, str] = {
+    "A": "A_L", "B": "B_L", "X": "X_L", "Y": "Y_L",
+    "L": "L", "ZL": "ZL", "Minus": "Minus", "Capture": "Capture",
+    "LStick": "LStick", "SL": "SL_L", "SR": "SR_L",
 }
-BUTTON_INDICES_DUAL: dict[str, int] = {v: k for k, v in BUTTON_NAMES_DUAL.items()}
+RIGHT_TO_DUAL_NAMES: dict[str, str] = {
+    "A": "A_R", "B": "B_R", "X": "X_R", "Y": "Y_R",
+    "R": "R", "ZR": "ZR", "Plus": "Plus", "Home": "Home",
+    "RStick": "RStick", "SL": "SL_R", "SR": "SR_R",
+}
 
 # === Mode-based lookup tables ===
 BUTTON_NAMES_BY_MODE: dict[str, dict[int, str]] = {
@@ -146,7 +137,8 @@ BUTTON_INDICES_BY_MODE: dict[str, dict[str, int]] = {
 MAPPABLE_BUTTONS_BY_MODE: dict[str, tuple[str, ...]] = {
     "single_right": ("A", "B", "X", "Y", "R", "ZR", "Plus", "Home", "RStick", "SL", "SR"),
     "single_left": ("A", "B", "X", "Y", "L", "ZL", "Minus", "Capture", "LStick", "SL", "SR"),
-    "dual": ("A", "B", "X", "Y", "R", "ZR", "L", "ZL", "Plus", "Minus", "Home",
+    "dual": ("A_L", "B_L", "X_L", "Y_L", "A_R", "B_R", "X_R", "Y_R",
+             "R", "ZR", "L", "ZL", "Plus", "Minus", "Home",
              "RStick", "LStick", "Capture", "SL_L", "SR_L", "SL_R", "SR_R"),
 }
 
@@ -227,10 +219,14 @@ DEFAULT_MAPPINGS_LEFT: dict = {
 
 DEFAULT_MAPPINGS_DUAL: dict = {
     "buttons": {
-        "A":       {"action": "tap", "key": "enter"},
-        "B":       {"action": "sequence", "keys": ["shift", "tab"]},
-        "X":       {"action": "auto", "key": "f2"},
-        "Y":       {"action": "sequence", "keys": ["alt", "tab"], "repeat": 500},
+        "A_L":     {"action": "tap", "key": "enter"},
+        "B_L":     {"action": "sequence", "keys": ["shift", "tab"]},
+        "X_L":     {"action": "auto", "key": "f2"},
+        "Y_L":     {"action": "sequence", "keys": ["alt", "tab"], "repeat": 500},
+        "A_R":     {"action": "mouse_left_click"},
+        "B_R":     {"action": "mouse_right_click"},
+        "X_R":     {"action": "auto", "key": "f2"},
+        "Y_R":     {"action": "sequence", "keys": ["alt", "tab"], "repeat": 500},
         "R":       {"action": "window_switch"},
         "ZR":     {
             "action": "macro",
@@ -303,6 +299,7 @@ DEFAULT_CONFIGS: dict[str, dict] = {
     "dual": DEFAULT_CONFIG_DUAL,
 }
 
-VALID_ACTIONS = ("tap", "hold", "auto", "combination", "sequence", "window_switch", "macro")
+VALID_ACTIONS = ("tap", "hold", "auto", "combination", "sequence", "window_switch", "macro",
+                  "mouse_left_click", "mouse_right_click", "mouse_middle_click")
 
 __version__ = "1.0.0"
