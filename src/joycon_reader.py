@@ -1,9 +1,3 @@
-"""pygame-based Joy-Con R detection and polling loop.
-
-Handles controller discovery, button state polling, axis reading,
-disconnection detection, and automatic reconnection.
-"""
-
 from __future__ import annotations
 
 import threading
@@ -16,6 +10,12 @@ from .constants import (
     AXIS_RSTICK_X,
     AXIS_RSTICK_Y,
     BUTTON_NAMES,
+    BUTTON_NAMES_LEFT,
+    BUTTON_INDICES_LEFT,
+    BUTTON_INDICES,
+    DUAL_RIGHT_OFFSET,
+    LEFT_TO_DUAL_NAMES,
+    RIGHT_TO_DUAL_NAMES,
     SNAPBACK_FRAMES,
 )
 from .joystick_handler import apply_deadzone, get_direction
@@ -73,6 +73,37 @@ def find_joycon(joystick_index: int | None = None) -> pygame.joystick.Joystick |
     return None
 
 
+def find_both_joycons() -> tuple[pygame.joystick.Joystick | None, pygame.joystick.Joystick | None]:
+    """Find and return left and right Joy-Con joystick instances.
+
+    Returns:
+        (left_js, right_js) tuple. Either may be None if not found.
+    """
+    pygame.joystick.init()
+    count = pygame.joystick.get_count()
+
+    left_js = None
+    right_js = None
+
+    for i in range(count):
+        js = pygame.joystick.Joystick(i)
+        name = js.get_name().lower()
+
+        if not any(kw in name for kw in ("joy-con", "joy con", "switch", "pro controller")):
+            continue
+
+        if "l" in name and "r" not in name:
+            left_js = js
+            logger.info("Left Joy-Con [%d]: %s (buttons=%d, axes=%d)",
+                        i, js.get_name(), js.get_numbuttons(), js.get_numaxes())
+        elif "r" in name and "l" not in name:
+            right_js = js
+            logger.info("Right Joy-Con [%d]: %s (buttons=%d, axes=%d)",
+                        i, js.get_name(), js.get_numbuttons(), js.get_numaxes())
+
+    return left_js, right_js
+
+
 def detect_connection_mode() -> str:
     """Detect the Joy-Con connection mode from connected joysticks.
 
@@ -91,7 +122,10 @@ def detect_connection_mode() -> str:
     has_right = False
 
     for i in range(count):
-        js = pygame.joystick.Joystick(i)
+        try:
+            js = pygame.joystick.Joystick(i)
+        except pygame.error:
+            continue
         name = js.get_name().lower()
 
         # Skip non-Joy-Con devices
@@ -226,14 +260,16 @@ def run_polling_loop(
     config: dict,
     stop_event: threading.Event | None = None,
     on_mode_change: callable = None,
+    joystick2: pygame.joystick.Joystick | None = None,
 ) -> None:
     """Main polling loop: read controller state and dispatch to key_mapper.
 
     Args:
-        joystick: Initialized pygame Joystick instance.
+        joystick: Primary pygame Joystick instance (left in dual mode).
         key_mapper: KeyMapper instance for action dispatch.
         config: Complete configuration dict.
         stop_event: Threading event to signal loop exit. None = run until Ctrl+C.
+        joystick2: Optional second Joystick for dual mode (right Joy-Con).
     """
     from .config_loader import get_profile
 
@@ -243,22 +279,36 @@ def run_polling_loop(
     axis_x = config.get("axis_x", AXIS_RSTICK_X)
     axis_y = config.get("axis_y", AXIS_RSTICK_Y)
 
+    is_dual = joystick2 is not None
+    right_stick_mouse_mode = config.get("right_stick_mouse", False) and is_dual
+    mouse_sensitivity = config.get("mouse_sensitivity", 15)
+
     clock = pygame.time.Clock()
     prev_buttons: set[int] = set()
+    prev_buttons2: set[int] = set()
     prev_direction: str | None = None
+    prev_direction2: str | None = None
+    prev_mouse_active: bool = False
     center_count: int = 0
+    center_count2: int = 0
 
     # Connection mode tracking — check every 5 seconds
     current_mode = config.get("active_profile", "single_right")
     mode_check_interval = 5.0  # seconds
     last_mode_check = time.monotonic()
 
-    logger.info("Polling started (deadzone=%.2f, interval=%.0fms, mode=%s)",
-                deadzone, poll_interval * 1000, stick_mode)
+    logger.info("Polling started (deadzone=%.2f, interval=%.0fms, mode=%s, dual=%s, mouse=%s, sens=%d)",
+                deadzone, poll_interval * 1000, stick_mode, is_dual, right_stick_mouse_mode, mouse_sensitivity)
 
-    # Calibrate baseline: average resting position over 10 samples
+    # Calibrate baseline for primary joystick
     baseline_x, baseline_y = _calibrate_baseline(joystick, axis_x, axis_y)
-    logger.info("Stick baseline: x=%.4f, y=%.4f", baseline_x, baseline_y)
+    logger.info("Stick1 baseline: x=%.4f, y=%.4f", baseline_x, baseline_y)
+
+    # Calibrate baseline for second joystick
+    baseline2_x, baseline2_y = 0.0, 0.0
+    if is_dual:
+        baseline2_x, baseline2_y = _calibrate_baseline(joystick2, axis_x, axis_y)
+        logger.info("Stick2 baseline: x=%.4f, y=%.4f", baseline2_x, baseline2_y)
 
     try:
         while not (stop_event and stop_event.is_set()):
@@ -303,7 +353,7 @@ def run_polling_loop(
 
                 continue
 
-            # --- Button polling ---
+            # --- Button polling (primary joystick) ---
             current_buttons: set[int] = set()
             for i in range(joystick.get_numbuttons()):
                 if joystick.get_button(i):
@@ -320,7 +370,29 @@ def run_polling_loop(
 
             prev_buttons = current_buttons
 
-            # --- Stick polling ---
+            # --- Button polling (second joystick, dual mode) ---
+            if is_dual:
+                try:
+                    pygame.event.pump()
+                except pygame.error:
+                    pass
+                current_buttons2: set[int] = set()
+                for i in range(joystick2.get_numbuttons()):
+                    if joystick2.get_button(i):
+                        current_buttons2.add(i + DUAL_RIGHT_OFFSET)
+
+                pressed2 = current_buttons2 - prev_buttons2
+                released2 = prev_buttons2 - current_buttons2
+
+                for btn_idx in sorted(pressed2):
+                    key_mapper.button_down(btn_idx)
+
+                for btn_idx in sorted(released2):
+                    key_mapper.button_up(btn_idx)
+
+                prev_buttons2 = current_buttons2
+
+            # --- Stick polling (primary joystick) ---
             raw_x = joystick.get_axis(axis_x) - baseline_x
             raw_y = joystick.get_axis(axis_y) - baseline_y
             filt_x, filt_y = apply_deadzone(raw_x, raw_y, deadzone)
@@ -336,6 +408,43 @@ def run_polling_loop(
                     center_count = 0
                     key_mapper.stick_direction(direction)
                     prev_direction = direction
+
+            # --- Stick polling (second joystick, dual mode) ---
+            if is_dual:
+                raw2_x = joystick2.get_axis(axis_x) - baseline2_x
+                raw2_y = joystick2.get_axis(axis_y) - baseline2_y
+                filt2_x, filt2_y = apply_deadzone(raw2_x, raw2_y, deadzone)
+
+                if right_stick_mouse_mode:
+                    # Mouse mode: analog stick → relative mouse movement
+                    # Use high deadzone to prevent drift from noisy resting position
+                    mouse_deadzone = max(deadzone, 0.5)
+                    filt2_x, filt2_y = apply_deadzone(raw2_x, raw2_y, mouse_deadzone)
+                    if abs(filt2_x) > 0.1 or abs(filt2_y) > 0.1:
+                        dx = int(filt2_x * mouse_sensitivity)
+                        dy = int(-filt2_y * mouse_sensitivity)
+                        if dx != 0 or dy != 0:
+                            from . import mouse_output
+                            mouse_output.move(dx, dy)
+                            logger.debug("mouse move: dx=%d, dy=%d (raw=%.3f,%.3f filt=%.3f,%.3f)",
+                                         dx, dy, raw2_x, raw2_y, filt2_x, filt2_y)
+                    elif prev_mouse_active:
+                        pass  # Stick returned to center
+                    prev_mouse_active = True
+                else:
+                    prev_mouse_active = False
+                    direction2 = get_direction(filt2_x, filt2_y, stick_mode)
+
+                    if direction2 != prev_direction2:
+                        if direction2 is None:
+                            center_count2 += 1
+                            if center_count2 >= SNAPBACK_FRAMES:
+                                key_mapper.stick_centered()
+                                prev_direction2 = None
+                        else:
+                            center_count2 = 0
+                            key_mapper.stick_direction(direction2)
+                            prev_direction2 = direction2
 
             # Periodic connection mode check (detect Joy-Con hot-plug changes)
             now = time.monotonic()

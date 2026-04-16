@@ -1,15 +1,3 @@
-"""NS Joy-Con R Keyboard Mapper — CLI entry point.
-
-Maps Nintendo Switch Joy-Con R controller inputs to keyboard shortcuts.
-Supports configurable key mappings via JSON config files.
-
-Usage:
-    python -m src                    # Run with default mappings
-    python src/main.py               # Also supported
-    python -m src --discover         # Calibrate button indices
-    python -m src --config my.json   # Use custom config
-"""
-
 import argparse
 import ctypes
 import logging
@@ -27,10 +15,6 @@ if __package__ is None:
     __package__ = "src"
 
 # Prevent SDL2 from merging Joy-Con L+R into a single combined device.
-# Without this, SDL2 exclusively consumes Joy-Con R's HID report stream,
-# making it impossible for the battery reader to receive any reports from R.
-# With this set, both Joy-Cons remain independent Joystick devices and
-# hidapi can concurrently read battery reports from each one.
 os.environ.setdefault("SDL_JOYSTICK_HIDAPI_COMBINE_JOY_CONS", "0")
 
 import pygame
@@ -38,7 +22,7 @@ import pygame
 from .battery_reader import BatteryReader
 from .config_loader import load_config, get_profile, USER_CONFIG_PATH
 from .gui import MainWindow
-from .joycon_reader import find_joycon, detect_connection_mode, run_discover_mode, run_polling_loop, wait_for_reconnection
+from .joycon_reader import find_joycon, find_both_joycons, detect_connection_mode, run_discover_mode, run_polling_loop, wait_for_reconnection
 from .keep_alive import KeepAliveManager
 from .key_mapper import KeyMapper
 from .tray_icon import create_tray_icon, run_tray
@@ -230,6 +214,19 @@ def main() -> None:
 
     # Detect connection mode and load the appropriate profile
     connection_mode = detect_connection_mode()
+
+    # In dual mode, find both joysticks
+    js2 = None
+    if connection_mode == "dual":
+        js_left, js_right = find_both_joycons()
+        if js_left and js_right:
+            js = js_left  # Primary = left
+            js2 = js_right  # Secondary = right
+            print(f"Left Joy-Con:  {js_left.get_name()} (buttons={js_left.get_numbuttons()}, axes={js_left.get_numaxes()})")
+            print(f"Right Joy-Con: {js_right.get_name()} (buttons={js_right.get_numbuttons()}, axes={js_right.get_numaxes()})")
+        else:
+            logger.warning("Dual mode detected but could not find both Joy-Cons, using single device")
+
     profile = get_profile(config, connection_mode)
     profile_mappings = profile.get("mappings", config.get("mappings", {}))
     config["mappings"] = profile_mappings
@@ -274,7 +271,7 @@ def main() -> None:
     # Start polling loop in background thread (after GUI so callback is available)
     poll_thread = threading.Thread(
         target=_run_polling,
-        args=(js, key_mapper, config, stop_event, gui.update_connection_mode),
+        args=(js, key_mapper, config, stop_event, gui.update_connection_mode, js2),
         daemon=True,
     )
     poll_thread.start()
@@ -306,10 +303,12 @@ def _run_polling(
     config: dict,
     stop_event: threading.Event,
     on_mode_change=None,
+    joystick2=None,
 ) -> None:
     """Run polling loop in a background thread, handling exceptions."""
     try:
-        run_polling_loop(joystick, key_mapper, config, stop_event, on_mode_change=on_mode_change)
+        run_polling_loop(joystick, key_mapper, config, stop_event,
+                         on_mode_change=on_mode_change, joystick2=joystick2)
     except Exception:
         logger.exception("Polling thread error")
 
