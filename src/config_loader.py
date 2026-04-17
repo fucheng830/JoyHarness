@@ -85,6 +85,12 @@ def merge_with_defaults(user_config: dict) -> dict:
         if key in user_config:
             result[key] = user_config[key]
 
+    # Override gyro mouse settings
+    for key in ("gyro_mouse_enabled", "gyro_mouse_sensitivity", "gyro_mouse_side",
+                "gyro_mouse_calibration", "gyro_mouse_cutoff", "gyro_mouse_smooth"):
+        if key in user_config:
+            result[key] = user_config[key]
+
     # Preserve known_apps from user config (not in DEFAULT_CONFIG)
     if "known_apps" in user_config:
         result["known_apps"] = user_config["known_apps"]

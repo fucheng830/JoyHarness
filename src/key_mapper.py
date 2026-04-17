@@ -179,6 +179,16 @@ class KeyMapper:
             mouse_output.click(button)
             logger.debug("mouse click [%s] → %s", btn_name, button)
 
+        elif action == "window_switch_next":
+            target = self._window_cycler.next()
+            if target:
+                logger.info("window_switch_next [%s] → %s", btn_name, target.title)
+
+        elif action == "window_switch_prev":
+            target = self._window_cycler.prev()
+            if target:
+                logger.info("window_switch_prev [%s] → %s", btn_name, target.title)
+
     def button_up(self, button_index: int) -> None:
         """Handle a button release event."""
         btn_name = _button_label(button_index, self._mode)

@@ -295,6 +295,9 @@ def run_polling_loop(
     prev_direction: str | None = None
     prev_direction2: str | None = None
     prev_mouse_active: bool = False
+    last_stick_fire: float = 0.0
+    last_stick_fire2: float = 0.0
+    stick_cooldown: float = 0.15  # Minimum seconds between same-direction triggers
     center_count: int = 0
     center_count2: int = 0
 
@@ -399,21 +402,29 @@ def run_polling_loop(
                 prev_buttons2 = current_buttons2
 
             # --- Stick polling (primary joystick) ---
-            raw_x = joystick.get_axis(axis_x) - baseline_x
-            raw_y = joystick.get_axis(axis_y) - baseline_y
-            filt_x, filt_y = apply_deadzone(raw_x, raw_y, deadzone)
-            direction = get_direction(filt_x, filt_y, stick_mode)
+            if config.get("stick_enabled", True):
+                raw_x = joystick.get_axis(axis_x) - baseline_x
+                raw_y = joystick.get_axis(axis_y) - baseline_y
+                filt_x, filt_y = apply_deadzone(raw_x, raw_y, deadzone)
+                direction = get_direction(filt_x, filt_y, stick_mode)
 
-            if direction != prev_direction:
-                if direction is None:
-                    center_count += 1
-                    if center_count >= SNAPBACK_FRAMES:
-                        key_mapper.stick_centered()
-                        prev_direction = None
-                else:
-                    center_count = 0
-                    key_mapper.stick_direction(direction)
-                    prev_direction = direction
+                if direction != prev_direction:
+                    if direction is None:
+                        center_count += 1
+                        if center_count >= SNAPBACK_FRAMES:
+                            key_mapper.stick_centered()
+                            prev_direction = None
+                    else:
+                        center_count = 0
+                        now_stick = time.monotonic()
+                        if now_stick - last_stick_fire >= stick_cooldown:
+                            key_mapper.stick_direction(direction)
+                            last_stick_fire = now_stick
+                        prev_direction = direction
+            else:
+                if prev_direction is not None:
+                    key_mapper.stick_centered()
+                    prev_direction = None
 
             # --- Stick polling (second joystick, dual mode) ---
             if is_dual:
@@ -449,7 +460,10 @@ def run_polling_loop(
                                 prev_direction2 = None
                         else:
                             center_count2 = 0
-                            key_mapper.stick_direction(direction2)
+                            now_stick2 = time.monotonic()
+                            if now_stick2 - last_stick_fire2 >= stick_cooldown:
+                                key_mapper.stick_direction(direction2)
+                                last_stick_fire2 = now_stick2
                             prev_direction2 = direction2
 
             # Periodic connection mode check (detect Joy-Con hot-plug changes)

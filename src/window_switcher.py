@@ -173,3 +173,22 @@ class WindowCycler:
                     self._current_index + 1, len(self._windows), target.title)
         switch_to_window(target.hwnd)
         return target
+
+    def prev(self) -> WindowInfo | None:
+        """Switch to the previous window in the list.
+
+        Always refreshes the window list before cycling to reflect closed/opened windows.
+        Returns the WindowInfo switched to, or None if no windows found.
+        """
+        self.refresh()
+
+        if not self._windows:
+            logger.warning("No windows found for %s", self._app_names)
+            return None
+
+        self._current_index = (self._current_index - 1) % len(self._windows)
+        target = self._windows[self._current_index]
+        logger.info("Switching to [%d/%d]: %s",
+                    self._current_index + 1, len(self._windows), target.title)
+        switch_to_window(target.hwnd)
+        return target

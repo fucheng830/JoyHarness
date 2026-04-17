@@ -268,6 +268,12 @@ DEFAULT_CONFIG: dict = {
     "stick_mode": "4dir",
     "stick_enabled": True,
     "keep_alive_enabled": True,
+    "gyro_mouse_enabled": False,
+    "gyro_mouse_sensitivity": 2.0,
+    "gyro_mouse_side": "R",
+    "gyro_mouse_calibration": 40.0,
+    "gyro_mouse_cutoff": 5.0,
+    "gyro_mouse_smooth": 0.125,
     "mappings": DEFAULT_MAPPINGS,
 }
 
@@ -299,7 +305,7 @@ DEFAULT_CONFIGS: dict[str, dict] = {
     "dual": DEFAULT_CONFIG_DUAL,
 }
 
-VALID_ACTIONS = ("tap", "hold", "auto", "combination", "sequence", "window_switch", "macro",
+VALID_ACTIONS = ("tap", "hold", "auto", "combination", "sequence", "window_switch", "window_switch_next", "window_switch_prev", "macro",
                   "mouse_left_click", "mouse_right_click", "mouse_middle_click")
 
 __version__ = "1.0.0"

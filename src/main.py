@@ -37,6 +37,7 @@ import pygame
 
 from .battery_reader import BatteryReader
 from .config_loader import load_config, get_profile, USER_CONFIG_PATH
+from .gyro_mouse import GyroMouseReader
 from .gui import MainWindow
 from .joycon_reader import find_joycon, find_both_joycons, detect_connection_mode, run_discover_mode, run_polling_loop, wait_for_reconnection
 from .keep_alive import KeepAliveManager
@@ -275,16 +276,32 @@ def main() -> None:
     keep_alive_manager = KeepAliveManager(stop_event)
     keep_alive_manager.set_enabled(config.get("keep_alive_enabled", True))
 
+    # Create GyroMouseReader (start later if enabled)
+    gyro_mouse = GyroMouseReader(
+        stop_event,
+        sensitivity=config.get("gyro_mouse_sensitivity", 2.0),
+        side=config.get("gyro_mouse_side", "R"),
+        real_world_calibration=config.get("gyro_mouse_calibration", 40.0),
+        cutoff_recovery=config.get("gyro_mouse_cutoff", 5.0),
+        smooth_time=config.get("gyro_mouse_smooth", 0.125),
+    )
+
     # Create GUI first so we can pass its mode-change callback to polling loop
     gui = MainWindow(
         key_mapper, key_mapper._window_cycler, config, stop_event,
         connection_mode=connection_mode,
         battery_reader=battery_reader,
         keep_alive_manager=keep_alive_manager,
+        gyro_mouse=gyro_mouse,
     )
     key_mapper.set_tk_root(gui.root)
 
     # Start polling loop in background thread (after GUI so callback is available)
+    # Auto-start gyro mouse if enabled in config
+    if config.get("gyro_mouse_enabled", False):
+        if not gyro_mouse.start():
+            logger.warning("Gyro mouse failed to start")
+
     poll_thread = threading.Thread(
         target=_run_polling,
         args=(js, key_mapper, config, stop_event, gui.update_connection_mode, js2),
@@ -300,14 +317,22 @@ def main() -> None:
     print("GUI and tray active. Close window or right-click tray to quit.")
 
     # Run GUI in main thread (blocks until window closed)
-    gui.run()
+    try:
+        gui.run()
+    except KeyboardInterrupt:
+        print("\nInterrupted, shutting down...")
 
     # Cleanup
     stop_event.set()
-    icon.stop()
+    try:
+        icon.stop()
+    except Exception:
+        pass
     poll_thread.join(timeout=2.0)
     battery_reader.join(timeout=2.0)
     keep_alive_manager.join(timeout=2.0)
+    if gyro_mouse:
+        gyro_mouse.join(timeout=1.0)
     key_mapper.release_all()
     pygame.quit()
     print("Clean exit. All keys released.")
