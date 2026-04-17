@@ -44,13 +44,14 @@ class GyroMouseReader:
     def __init__(
         self,
         stop_event: threading.Event,
-        sensitivity: float = 2.0,
+        sensitivity: float = 0.4,
         side: str = "R",
         real_world_calibration: float = 40.0,
         cutoff_recovery: float = 5.0,
         smooth_time: float = 0.125,
     ) -> None:
         self._stop_event = stop_event
+        self._gyro_stop = threading.Event()  # Independent stop signal for gyro thread
         self._sensitivity = sensitivity
         self._side = side
         self._real_world_calibration = real_world_calibration
@@ -90,6 +91,8 @@ class GyroMouseReader:
         if self._thread and self._thread.is_alive():
             return True  # Already running
 
+        self._gyro_stop.clear()
+
         pid = _PID_R if self._side == "R" else _PID_L
         devices = hid.enumerate(_VID, pid)
         if not devices:
@@ -125,6 +128,7 @@ class GyroMouseReader:
         return True
 
     def join(self, timeout: float = 1.0) -> None:
+        self._gyro_stop.set()
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=timeout)
         if self._dev:
@@ -215,7 +219,7 @@ class GyroMouseReader:
     def _read_loop(self) -> None:
         logger.debug("Gyro: read loop started")
 
-        while not self._stop_event.is_set():
+        while not self._stop_event.is_set() and not self._gyro_stop.is_set():
             try:
                 data = self._dev.read(64, timeout_ms=10)
             except OSError:

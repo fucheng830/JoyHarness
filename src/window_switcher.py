@@ -22,6 +22,8 @@ PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 KNOWN_APPS: dict[str, str] = {
     "VS Code": "code.exe",
     "飞书": "feishu.exe",
+    "微信": "wechat.exe",
+    "PowerShell": "windowsterminal.exe",
 }
 
 
