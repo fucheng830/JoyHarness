@@ -17,11 +17,24 @@ from .constants import (
     BUTTON_NAMES_BY_MODE,
     STICK_DIRECTIONS,
 )
+from .paths import get_app_root, get_resource_path
 
 logger = logging.getLogger(__name__)
 
 
-USER_CONFIG_PATH = str(Path(__file__).resolve().parent.parent / "config" / "user.json")
+USER_CONFIG_PATH = str(get_app_root() / "config" / "user.json")
+
+
+def _ensure_user_config() -> None:
+    """Copy bundled user.json to app root if it doesn't already exist."""
+    target = Path(USER_CONFIG_PATH)
+    if target.exists():
+        return
+    bundled = get_resource_path("config/user.json")
+    if bundled.exists():
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(bundled.read_text(encoding="utf-8"), encoding="utf-8")
+        logger.info("Extracted default user config to %s", target)
 
 
 def load_config(path: str | None = None) -> dict:

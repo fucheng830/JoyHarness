@@ -42,10 +42,7 @@ pip install -r requirements.txt
 
 ```bash
 # 使用管理员权限运行（键盘模拟需要）
-python src/main.py
-
-# 或使用批处理文件自动提权
-run.bat
+python main.py
 ```
 
 启动时自动检测连接模式，标题栏会显示当前模式：`JoyHarness [右手柄]` / `JoyHarness [左手柄]` / `JoyHarness [左右手柄]`。
@@ -53,14 +50,14 @@ run.bat
 ### 命令行参数
 
 ```
-python src/main.py --config custom.json  # 使用自定义配置
-python src/main.py --discover            # 调试模式：显示按钮/轴原始值
-python src/main.py --deadzone 0.2        # 覆盖死区值
-python src/main.py --list-controls       # 列出当前映射和可用配置档
-python src/main.py --verbose             # 调试日志
-python src/main.py --joystick 0          # 指定手柄设备索引
-python src/main.py --version             # 显示版本号
-python src/main.py --no-admin-warn       # 关闭管理员权限警告
+python main.py --config custom.json  # 使用自定义配置
+python main.py --discover            # 调试模式：显示按钮/轴原始值
+python main.py --deadzone 0.2        # 覆盖死区值
+python main.py --list-controls       # 列出当前映射和可用配置档
+python main.py --verbose             # 调试日志
+python main.py --joystick 0          # 指定手柄设备索引
+python main.py --version             # 显示版本号
+python main.py --no-admin-warn       # 关闭管理员权限警告
 ```
 
 ### 校准工具
@@ -134,6 +131,7 @@ python calibrate.py
 ## 项目结构
 
 ```
+main.py               # 统一入口（开发 & 打包共用）
 src/
 ├── __init__.py          # 包初始化
 ├── __main__.py          # python -m src 入口

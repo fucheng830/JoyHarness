@@ -6,139 +6,97 @@
   "stick_mode": "4dir",
   "stick_enabled": false,
   "keep_alive_enabled": true,
+  "gyro_mouse_enabled": false,
+  "gyro_mouse_sensitivity": 0.4,
+  "gyro_mouse_side": "R",
+  "gyro_mouse_calibration": 40.0,
+  "gyro_mouse_cutoff": 5.0,
+  "gyro_mouse_smooth": 0.125,
   "mappings": {
     "buttons": {
       "A": {
         "action": "tap",
-        "key": "backspace"
+        "key": "enter"
       },
       "B": {
-        "action": "sequence",
-        "keys": [
-          "alt",
-          "tab"
-        ],
-        "repeat": 500
+        "action": "tap",
+        "key": "backspace"
       },
       "X": {
         "action": "hold",
-        "key": "ctrl"
+        "key": "right ctrl"
       },
       "Y": {
-        "action": "tap",
-        "key": "enter"
+        "action": "mouse_left_click"
       },
       "R": {
-        "action": "hold",
-        "key": "ctrl"
+        "action": "window_switch_next"
       },
       "ZR": {
-        "action": "macro",
-        "if_window": "code.exe",
-        "steps": [
-          {
-            "type": "combination",
-            "keys": [
-              "ctrl",
-              "shift",
-              "p"
-            ]
-          },
-          {
-            "type": "delay",
-            "ms": 100
-          },
-          {
-            "type": "type",
-            "text": "Claude Code: Focus input"
-          },
-          {
-            "type": "delay",
-            "ms": 100
-          },
-          {
-            "type": "tap",
-            "key": "enter"
-          }
-        ]
-      },
-      "L": {
-        "action": "tap",
-        "key": "backspace"
-      },
-      "ZL": {
-        "action": "hold",
-        "key": "shift"
+        "action": "window_switch_prev"
       },
       "Plus": {
+        "action": "mouse_right_click"
+      },
+      "Home": {
         "action": "combination",
         "keys": [
           "ctrl",
-          "s"
+          "c"
         ]
       },
-      "Minus": {
-        "action": "tap",
-        "key": "escape"
-      },
-      "Home": {
-        "action": "tap",
-        "key": "windows"
-      },
-      "Capture": {
-        "action": "tap",
-        "key": "print_screen"
-      },
       "RStick": {
+        "action": "mouse_left_click"
+      },
+      "SL": {
         "action": "tap",
-        "key": "tab"
+        "key": "f2"
       },
-      "LStick": {
-        "action": "tap",
-        "key": "enter"
-      },
-      "SL_L": {
-        "action": "hold",
-        "key": "alt"
-      },
-      "SR_L": {
-        "action": "window_switch"
-      },
-      "SL_R": {
-        "action": "hold",
-        "key": "alt"
-      },
-      "SR_R": {
-        "action": "window_switch"
+      "SR": {
+        "action": "combination",
+        "keys": [
+          "shift",
+          "tab"
+        ]
       }
     },
     "stick_directions": {
       "up": {
-        "action": "tap",
-        "key": "down"
+        "action": "auto",
+        "key": "down",
+        "repeat": 100
       },
       "down": {
-        "action": "tap",
-        "key": "up"
+        "action": "auto",
+        "key": "up",
+        "repeat": 100
       },
       "left": {
-        "action": "tap",
-        "key": "right"
+        "action": "auto",
+        "key": "left",
+        "repeat": 100
       },
       "right": {
-        "action": "tap",
-        "key": "left"
+        "action": "auto",
+        "key": "right",
+        "repeat": 100
       }
     }
   },
+  "right_stick_mouse": true,
+  "mouse_sensitivity": 15,
   "known_apps": {
     "VS Code": "code.exe",
     "Chrome": "chrome.exe",
-    "飞书": "feishu.exe"
+    "飞书": "feishu.exe",
+    "PowerShell": "powershell.exe",
+    "微信": "wechat.exe"
   },
   "selected_apps": [
     "code.exe",
-    "chrome.exe"
+    "chrome.exe",
+    "powershell.exe",
+    "wechat.exe"
   ],
   "profiles": {
     "single_right": {
@@ -176,7 +134,11 @@
             ]
           },
           "RStick": {
-            "action": "mouse_left_click"
+            "action": "combination",
+            "keys": [
+              "alt",
+              "a"
+            ]
           },
           "SL": {
             "action": "tap",
@@ -370,7 +332,11 @@
             ]
           },
           "RStick": {
-            "action": "mouse_left_click"
+            "action": "combination",
+            "keys": [
+              "alt",
+              "a"
+            ]
           },
           "LStick": {
             "action": "tap",
@@ -416,13 +382,5 @@
       }
     }
   },
-  "active_profile": "dual",
-  "right_stick_mouse": true,
-  "mouse_sensitivity": 15,
-  "gyro_mouse_enabled": false,
-  "gyro_mouse_sensitivity": 0.4,
-  "gyro_mouse_side": "R",
-  "gyro_mouse_calibration": 40.0,
-  "gyro_mouse_cutoff": 5.0,
-  "gyro_mouse_smooth": 0.125
+  "active_profile": "single_right"
 }

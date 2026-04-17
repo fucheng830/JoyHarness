@@ -38,6 +38,7 @@ import pygame
 from .battery_reader import BatteryReader
 from .config_loader import load_config, get_profile, USER_CONFIG_PATH
 from .gyro_mouse import GyroMouseReader
+from .paths import get_app_root
 from .gui import MainWindow
 from .joycon_reader import find_joycon, find_both_joycons, detect_connection_mode, run_discover_mode, run_polling_loop, wait_for_reconnection
 from .keep_alive import KeepAliveManager
@@ -170,7 +171,7 @@ def main() -> None:
         logging.StreamHandler(),
     ]
     if args.verbose:
-        log_path = Path(__file__).resolve().parent.parent / "nsjc.log"
+        log_path = get_app_root() / "nsjc.log"
         handlers.append(logging.FileHandler(log_path, encoding="utf-8"))
     logging.basicConfig(
         level=log_level,
@@ -186,6 +187,8 @@ def main() -> None:
         print()
 
     # Load config — prefer user config if it exists
+    from .config_loader import _ensure_user_config
+    _ensure_user_config()
     config_path = args.config
     if config_path is None and Path(USER_CONFIG_PATH).exists():
         config_path = USER_CONFIG_PATH
