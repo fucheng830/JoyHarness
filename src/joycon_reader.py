@@ -410,10 +410,10 @@ def run_polling_loop(
 
                 if direction != prev_direction:
                     if direction is None:
-                        center_count += 1
-                        if center_count >= SNAPBACK_FRAMES:
-                            key_mapper.stick_centered()
-                            prev_direction = None
+                        # Stick returned to center — release immediately
+                        key_mapper.stick_centered()
+                        prev_direction = None
+                        center_count = 0
                     else:
                         center_count = 0
                         now_stick = time.monotonic()
@@ -454,10 +454,9 @@ def run_polling_loop(
 
                     if direction2 != prev_direction2:
                         if direction2 is None:
-                            center_count2 += 1
-                            if center_count2 >= SNAPBACK_FRAMES:
-                                key_mapper.stick_centered()
-                                prev_direction2 = None
+                            key_mapper.stick_centered()
+                            prev_direction2 = None
+                            center_count2 = 0
                         else:
                             center_count2 = 0
                             now_stick2 = time.monotonic()

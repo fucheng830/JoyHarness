@@ -89,14 +89,14 @@
     "VS Code": "code.exe",
     "Chrome": "chrome.exe",
     "飞书": "feishu.exe",
-    "PowerShell": "powershell.exe",
-    "微信": "wechat.exe"
+    "PowerShell 7": "windowsterminal.exe",
+    "微信": "weixin.exe"
   },
   "selected_apps": [
     "code.exe",
     "chrome.exe",
-    "powershell.exe",
-    "wechat.exe"
+    "windowsterminal.exe",
+    "weixin.exe"
   ],
   "profiles": {
     "single_right": {
@@ -141,8 +141,11 @@
             ]
           },
           "SL": {
-            "action": "tap",
-            "key": "f2"
+            "action": "combination",
+            "keys": [
+              "alt",
+              "a"
+            ]
           },
           "SR": {
             "action": "combination",
