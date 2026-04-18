@@ -304,6 +304,10 @@ def run_polling_loop(
     # Connection mode tracking — check every 5 seconds
     current_mode = config.get("active_profile", "single_right")
     mode_check_interval = 5.0  # seconds
+
+    # Disconnect detection: count consecutive idle frames (all buttons zero + stick centered)
+    idle_frame_count: int = 0
+    idle_disconnect_threshold: int = 500  # ~5 seconds at 100Hz polling
     last_mode_check = time.monotonic()
 
     logger.info("Polling started (deadzone=%.2f, interval=%.0fms, mode=%s, dual=%s, mouse=%s, sens=%d)",
@@ -378,6 +382,40 @@ def run_polling_loop(
                 key_mapper.button_up(btn_idx)
 
             prev_buttons = current_buttons
+
+            # --- Disconnect detection ---
+            # pygame may not throw an error when Bluetooth Joy-Con disconnects.
+            # Detect by checking if device count drops or if input is completely idle.
+            if pygame.joystick.get_count() == 0:
+                logger.warning("No joysticks found, device likely disconnected")
+                key_mapper.release_all()
+                from . import keyboard_output
+                keyboard_output.release_all()
+                js = wait_for_reconnection()
+                if js is None or (stop_event and stop_event.is_set()):
+                    break
+                joystick = js
+                prev_buttons = set()
+                prev_direction = None
+                center_count = 0
+                idle_frame_count = 0
+                baseline_x, baseline_y = _calibrate_baseline(joystick, axis_x, axis_y)
+                logger.info("Reconnected: %s, baseline=(%.4f, %.4f)", js.get_name(), baseline_x, baseline_y)
+                try:
+                    detected_mode = detect_connection_mode()
+                    if detected_mode != current_mode:
+                        logger.info("Connection mode changed: %s → %s", current_mode, detected_mode)
+                        profile = get_profile(config, detected_mode)
+                        profile_mappings = profile.get("mappings", config.get("mappings", {}))
+                        config["mappings"] = profile_mappings
+                        config["active_profile"] = detected_mode
+                        key_mapper.switch_profile(config, detected_mode)
+                        current_mode = detected_mode
+                        if on_mode_change:
+                            on_mode_change(detected_mode)
+                except Exception:
+                    logger.debug("Mode check after reconnect failed", exc_info=True)
+                continue
 
             # --- Button polling (second joystick, dual mode) ---
             if is_dual:
