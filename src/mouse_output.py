@@ -39,6 +39,8 @@ MOUSEEVENTF_RIGHTDOWN = 0x0008
 MOUSEEVENTF_RIGHTUP = 0x0010
 MOUSEEVENTF_MIDDLEDOWN = 0x0020
 MOUSEEVENTF_MIDDLEUP = 0x0040
+MOUSEEVENTF_WHEEL = 0x0800
+WHEEL_DELTA = 120
 
 # Mouse button flags
 _BUTTON_FLAGS = {
@@ -99,6 +101,26 @@ def click(button: str = "left") -> None:
         _send_mouse_input(flags=flags[0])
         _send_mouse_input(flags=flags[1])
         logger.debug("mouse click: %s", button)
+
+
+def scroll(direction: str, clicks: int = 3) -> None:
+    """Scroll the mouse wheel.
+
+    Args:
+        direction: "up" or "down"
+        clicks: number of scroll clicks (each click = WHEEL_DELTA)
+    """
+    delta = WHEEL_DELTA * clicks if direction == "up" else -WHEEL_DELTA * clicks
+    inp = _INPUT()
+    inp.type = INPUT_MOUSE
+    inp._input.mi.dx = 0
+    inp._input.mi.dy = 0
+    inp._input.mi.mouseData = delta
+    inp._input.mi.dwFlags = MOUSEEVENTF_WHEEL
+    inp._input.mi.time = 0
+    inp._input.mi.dwExtraInfo = ctypes.pointer(ctypes.c_ulong(0))
+    ctypes.windll.user32.SendInput(1, ctypes.byref(inp), ctypes.sizeof(inp))
+    logger.debug("mouse scroll: %s x%d", direction, clicks)
 
 
 def release_all() -> None:

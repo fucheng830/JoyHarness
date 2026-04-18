@@ -182,14 +182,14 @@ DEFAULT_MAPPINGS: dict = {
             ],
         },
         "Plus":   {"action": "combination", "keys": ["ctrl", "s"]},
-        "Home":   {"action": "tap", "key": "windows"},
-        "RStick": {"action": "tap", "key": "tab"},
+        "Home":   {"action": "combination", "keys": ["ctrl", "c"]},
+        "RStick": {"action": "combination", "keys": ["ctrl", "v"]},
         "SL":     {"action": "hold", "key": "alt"},
         "SR":     {"action": "window_switch"},
     },
     "stick_directions": {
-        "up":    {"action": "auto", "key": "down", "repeat": 100},
-        "down":  {"action": "auto", "key": "up", "repeat": 100},
+        "up":    {"action": "scroll_up"},
+        "down":  {"action": "scroll_down"},
         "left":  {"action": "auto", "key": "left", "repeat": 100},
         "right": {"action": "auto", "key": "right", "repeat": 100},
     },
@@ -243,9 +243,9 @@ DEFAULT_MAPPINGS_DUAL: dict = {
         "ZL":      {"action": "hold", "key": "shift"},
         "Plus":    {"action": "combination", "keys": ["ctrl", "s"]},
         "Minus":   {"action": "tap", "key": "escape"},
-        "Home":    {"action": "tap", "key": "windows"},
+        "Home":    {"action": "combination", "keys": ["ctrl", "c"]},
         "Capture": {"action": "tap", "key": "print_screen"},
-        "RStick":  {"action": "tap", "key": "tab"},
+        "RStick":  {"action": "combination", "keys": ["ctrl", "v"]},
         "LStick":  {"action": "tap", "key": "enter"},
         "SL_L":    {"action": "hold", "key": "alt"},
         "SR_L":    {"action": "window_switch"},
@@ -253,8 +253,8 @@ DEFAULT_MAPPINGS_DUAL: dict = {
         "SR_R":    {"action": "window_switch"},
     },
     "stick_directions": {
-        "up":    {"action": "tap", "key": "up"},
-        "down":  {"action": "tap", "key": "down"},
+        "up":    {"action": "scroll_up"},
+        "down":  {"action": "scroll_down"},
         "left":  {"action": "tap", "key": "left"},
         "right": {"action": "tap", "key": "right"},
     },
@@ -306,6 +306,7 @@ DEFAULT_CONFIGS: dict[str, dict] = {
 }
 
 VALID_ACTIONS = ("tap", "hold", "auto", "combination", "sequence", "window_switch", "window_switch_next", "window_switch_prev", "macro",
-                  "mouse_left_click", "mouse_right_click", "mouse_middle_click")
+                  "mouse_left_click", "mouse_right_click", "mouse_middle_click",
+                  "scroll_up", "scroll_down")
 
 __version__ = "1.0.0"

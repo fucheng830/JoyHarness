@@ -46,7 +46,11 @@
         ]
       },
       "RStick": {
-        "action": "mouse_left_click"
+        "action": "combination",
+        "keys": [
+          "ctrl",
+          "v"
+        ]
       },
       "SL": {
         "action": "tap",
@@ -62,14 +66,10 @@
     },
     "stick_directions": {
       "up": {
-        "action": "auto",
-        "key": "down",
-        "repeat": 100
+        "action": "scroll_up"
       },
       "down": {
-        "action": "auto",
-        "key": "up",
-        "repeat": 100
+        "action": "scroll_down"
       },
       "left": {
         "action": "auto",
@@ -157,14 +157,10 @@
         },
         "stick_directions": {
           "up": {
-            "action": "auto",
-            "key": "down",
-            "repeat": 100
+            "action": "scroll_up"
           },
           "down": {
-            "action": "auto",
-            "key": "up",
-            "repeat": 100
+            "action": "scroll_down"
           },
           "left": {
             "action": "auto",

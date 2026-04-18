@@ -24,14 +24,14 @@
         ]
       },
       "Plus":   { "action": "combination", "keys": ["ctrl", "s"] },
-      "Home":   { "action": "tap",         "key": "windows" },
-      "RStick": { "action": "tap",         "key": "tab" },
+      "Home":   { "action": "combination",  "keys": ["ctrl", "c"] },
+      "RStick": { "action": "combination",  "keys": ["ctrl", "v"] },
       "SL":     { "action": "hold",        "key": "alt" },
       "SR":     { "action": "window_switch" }
     },
     "stick_directions": {
-      "up":    { "action": "tap", "key": "up" },
-      "down":  { "action": "tap", "key": "down" },
+      "up":    { "action": "scroll_up" },
+      "down":  { "action": "scroll_down" },
       "left":  { "action": "tap", "key": "left" },
       "right": { "action": "tap", "key": "right" }
     }

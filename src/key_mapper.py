@@ -277,13 +277,18 @@ class KeyMapper:
                 btn_name = _button_label(btn_idx, self._mode)
                 logger.debug("sequence repeat [%s] → %s", btn_name, "+".join(info["keys"]))
 
-        # Stick direction repeat (e.g., arrow key every 100ms while held)
+        # Stick direction repeat (e.g., arrow key / scroll every N ms while held)
         for k in list(self._stick_repeat.keys()):
             info = self._stick_repeat[k]
             if now - info["last_time"] >= info["interval"]:
-                keyboard_output.tap(info["key"])
+                if "scroll_dir" in info:
+                    from . import mouse_output
+                    mouse_output.scroll(info["scroll_dir"])
+                    logger.debug("stick scroll repeat [%s] → %s", k[1], info["scroll_dir"])
+                else:
+                    keyboard_output.tap(info["key"])
+                    logger.debug("stick repeat [%s] → %s", k[1], info["key"])
                 info["last_time"] = now
-                logger.debug("stick repeat [%s] → %s", k[1], info["key"])
 
         # Window switch: long press → show overlay and cycle
         if self._ws_held and not self._ws_overlay_active and self._switcher_overlay:
@@ -361,6 +366,18 @@ class KeyMapper:
         elif action == "combination":
             keyboard_output.send_combination(mapping["keys"])
             logger.debug("stick [%s] → %s", direction, "+".join(mapping["keys"]))
+        elif action in ("scroll_up", "scroll_down"):
+            from . import mouse_output
+            scroll_dir = action.replace("scroll_", "")
+            repeat_ms = mapping.get("repeat", 150)
+            mouse_output.scroll(scroll_dir)
+            self._active_holds[("stick", direction)] = "__scroll__"
+            self._stick_repeat[("stick", direction)] = {
+                "scroll_dir": scroll_dir,
+                "interval": repeat_ms / 1000.0,
+                "last_time": time.monotonic(),
+            }
+            logger.debug("stick scroll [%s] → %s (repeat=%dms)", direction, scroll_dir, repeat_ms)
 
     def stick_centered(self) -> None:
         """Handle stick returning to center."""
