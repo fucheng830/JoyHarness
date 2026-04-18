@@ -48,7 +48,7 @@ def get_direction(x: float, y: float, mode: str = "4dir") -> str | None:
         Direction string ("up", "down", "left", "right", etc.) or None if centered.
     """
     magnitude = math.sqrt(x * x + y * y)
-    if magnitude < 0.1:
+    if magnitude < 0.35:
         return None
 
     # atan2(y, x): up is -90deg, right is 0deg, down is 90deg, left is 180deg

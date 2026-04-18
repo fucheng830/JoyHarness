@@ -408,19 +408,25 @@ def run_polling_loop(
                 filt_x, filt_y = apply_deadzone(raw_x, raw_y, deadzone)
                 direction = get_direction(filt_x, filt_y, stick_mode)
 
-                if direction != prev_direction:
-                    if direction is None:
-                        # Stick returned to center — release immediately
-                        key_mapper.stick_centered()
-                        prev_direction = None
-                        center_count = 0
+                if direction is not None:
+                    center_count = 0
+                    if prev_direction == direction:
+                        now_stick = time.monotonic()
+                        if now_stick - last_stick_fire > 3.0:
+                            logger.debug("stick held: dir=%s filt=%.3f,%.3f",
+                                         direction, filt_x, filt_y)
+                            last_stick_fire = now_stick
                     else:
-                        center_count = 0
                         now_stick = time.monotonic()
                         if now_stick - last_stick_fire >= stick_cooldown:
                             key_mapper.stick_direction(direction)
                             last_stick_fire = now_stick
                         prev_direction = direction
+                else:
+                    if prev_direction is not None:
+                        key_mapper.stick_centered()
+                    prev_direction = None
+                    center_count = 0
             else:
                 if prev_direction is not None:
                     key_mapper.stick_centered()
