@@ -267,6 +267,7 @@ def run_polling_loop(
     stop_event: threading.Event | None = None,
     on_mode_change: callable = None,
     joystick2: pygame.joystick.Joystick | None = None,
+    gyro_mouse=None,
 ) -> None:
     """Main polling loop: read controller state and dispatch to key_mapper.
 
@@ -276,8 +277,18 @@ def run_polling_loop(
         config: Complete configuration dict.
         stop_event: Threading event to signal loop exit. None = run until Ctrl+C.
         joystick2: Optional second Joystick for dual mode (right Joy-Con).
+        gyro_mouse: Optional GyroMouseReader to restart on reconnection.
     """
     from .config_loader import get_profile
+
+    def _restart_gyro():
+        """Restart gyro mouse after reconnection if it was enabled."""
+        if gyro_mouse is None:
+            return
+        gyro_mouse.join(timeout=1.0)
+        if config.get("gyro_mouse_enabled", False):
+            gyro_mouse.start()
+            logger.info("Gyro mouse restarted after reconnection")
 
     deadzone = config.get("deadzone", 0.2)
     poll_interval = max(config.get("poll_interval", 0.01), 0.001)
@@ -347,6 +358,8 @@ def run_polling_loop(
                 logger.info("Reconnected: %s, baseline=(%.4f, %.4f)",
                             js.get_name(), baseline_x, baseline_y)
 
+                _restart_gyro()
+
                 # Re-detect connection mode after reconnection
                 try:
                     detected_mode = detect_connection_mode()
@@ -401,6 +414,7 @@ def run_polling_loop(
                 idle_frame_count = 0
                 baseline_x, baseline_y = _calibrate_baseline(joystick, axis_x, axis_y)
                 logger.info("Reconnected: %s, baseline=(%.4f, %.4f)", js.get_name(), baseline_x, baseline_y)
+                _restart_gyro()
                 try:
                     detected_mode = detect_connection_mode()
                     if detected_mode != current_mode:

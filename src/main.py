@@ -307,7 +307,7 @@ def main() -> None:
 
     poll_thread = threading.Thread(
         target=_run_polling,
-        args=(js, key_mapper, config, stop_event, gui.update_connection_mode, js2),
+        args=(js, key_mapper, config, stop_event, gui.update_connection_mode, js2, gyro_mouse),
         daemon=True,
     )
     poll_thread.start()
@@ -348,11 +348,13 @@ def _run_polling(
     stop_event: threading.Event,
     on_mode_change=None,
     joystick2=None,
+    gyro_mouse=None,
 ) -> None:
     """Run polling loop in a background thread, handling exceptions."""
     try:
         run_polling_loop(joystick, key_mapper, config, stop_event,
-                         on_mode_change=on_mode_change, joystick2=joystick2)
+                         on_mode_change=on_mode_change, joystick2=joystick2,
+                         gyro_mouse=gyro_mouse)
     except Exception:
         logger.exception("Polling thread error")
 
