@@ -51,7 +51,7 @@ class MainWindow(ResizableMixin):
         self._root = ttk.Window(
             title="NS Joy-Con R 键盘映射器",
             themename="darkly",
-            size=(453, 560),
+            size=(453, 620),
             resizable=(True, True),
         )
         self._root.protocol("WM_DELETE_WINDOW", self._on_close)
