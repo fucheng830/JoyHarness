@@ -7,7 +7,7 @@
   "stick_enabled": false,
   "keep_alive_enabled": true,
   "gyro_mouse_enabled": false,
-  "gyro_mouse_sensitivity": 0.4,
+  "gyro_mouse_sensitivity": 0.7,
   "gyro_mouse_side": "R",
   "gyro_mouse_calibration": 40.0,
   "gyro_mouse_cutoff": 5.0,
@@ -73,12 +73,12 @@
       },
       "left": {
         "action": "auto",
-        "key": "left",
+        "key": "up",
         "repeat": 100
       },
       "right": {
         "action": "auto",
-        "key": "right",
+        "key": "down",
         "repeat": 100
       }
     }
@@ -164,12 +164,12 @@
           },
           "left": {
             "action": "auto",
-            "key": "left",
+            "key": "up",
             "repeat": 100
           },
           "right": {
             "action": "auto",
-            "key": "right",
+            "key": "down",
             "repeat": 100
           }
         }

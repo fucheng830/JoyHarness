@@ -190,8 +190,8 @@ DEFAULT_MAPPINGS: dict = {
     "stick_directions": {
         "up":    {"action": "scroll_up"},
         "down":  {"action": "scroll_down"},
-        "left":  {"action": "auto", "key": "left", "repeat": 100},
-        "right": {"action": "auto", "key": "right", "repeat": 100},
+        "left":  {"action": "auto", "key": "up", "repeat": 100},
+        "right": {"action": "auto", "key": "down", "repeat": 100},
     },
 }
 
@@ -269,7 +269,7 @@ DEFAULT_CONFIG: dict = {
     "stick_enabled": False,
     "keep_alive_enabled": True,
     "gyro_mouse_enabled": False,
-    "gyro_mouse_sensitivity": 0.4,
+    "gyro_mouse_sensitivity": 0.7,
     "gyro_mouse_side": "R",
     "gyro_mouse_calibration": 40.0,
     "gyro_mouse_cutoff": 5.0,

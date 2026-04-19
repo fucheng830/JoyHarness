@@ -32,8 +32,8 @@
     "stick_directions": {
       "up":    { "action": "scroll_up" },
       "down":  { "action": "scroll_down" },
-      "left":  { "action": "tap", "key": "left" },
-      "right": { "action": "tap", "key": "right" }
+      "left":  { "action": "auto", "key": "up" },
+      "right": { "action": "auto", "key": "down" }
     }
   }
 }
